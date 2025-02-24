@@ -19,5 +19,7 @@ namespace BackTareas.Models
         [Required]
         public string Password { get; set; }   
         public ICollection<Work>? Works { get; set; }
+        [Required]
+        public string ChatId { get; set; }
     }
 }

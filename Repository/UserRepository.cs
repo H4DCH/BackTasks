@@ -3,6 +3,7 @@ using BackTareas.Models;
 using BackTareas.Repository.IRepository;
 using BackTareas.Utilities;
 using Microsoft.EntityFrameworkCore;
+using Telegram.Bot;
 
 namespace BackTareas.Repository
 {
@@ -10,17 +11,45 @@ namespace BackTareas.Repository
     {
         private readonly Context context;
         private readonly CreatedToken createdToken;
-        public UserRepository(Context context, CreatedToken createdToken) : base(context)
+        private readonly ITelegramBotClient _telegramBotClient;
+        public UserRepository(Context context, CreatedToken createdToken, ITelegramBotClient telegramBotClient) : base(context)
         {
             this.context = context;
-            this.createdToken = createdToken;   
+            this.createdToken = createdToken;
+            _telegramBotClient = telegramBotClient;
         }
 
         public async Task<User> Create(User model)
         {
+
+            // Obtener las actualizaciones del bot
+            var updates = await _telegramBotClient.GetUpdates();
+
+            // Buscar el ChatId más reciente
+            foreach (var update in updates)
+            {
+                if (update.Message != null && update.Message.Chat != null)
+                {
+                    model.ChatId = update.Message.Chat.Id.ToString();
+                    break; // Tomamos el primer ChatId válido y salimos del bucle
+                }
+            }
+
+            // Validar que se haya obtenido un ChatId
+            if (string.IsNullOrEmpty(model.ChatId))
+            {
+                throw new InvalidOperationException("No se pudo obtener un ChatId válido.");
+            }
+
+            // Encriptar la contraseña
             model.Password = createdToken.EncryptSHA256(model.Password);
-            context.Users.Add(model);   
-            await Save();
+
+            // Guardar el usuario en la base de datos
+            context.Users.Add(model);
+            await context.SaveChangesAsync();
+
+            await _telegramBotClient.DeleteWebhook(dropPendingUpdates: true);
+
             return model;
         }
 

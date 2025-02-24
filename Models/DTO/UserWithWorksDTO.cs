@@ -9,5 +9,6 @@ namespace BackTareas.Models.DTO
         public string Name { get; set; }
         public string Email { get; set; }
         public ICollection<WorkDTO>? Works { get; set; }
+        public string ChatId { get; set; }
     }
 }

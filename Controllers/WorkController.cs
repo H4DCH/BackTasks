@@ -3,6 +3,7 @@ using AutoMapper.Configuration.Annotations;
 using BackTareas.Models;
 using BackTareas.Models.DTO;
 using BackTareas.Repository.IRepository;
+using BackTareas.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata;
 using System.Net;
@@ -14,13 +15,18 @@ namespace BackTareas.Controllers
     public class WorkController : ControllerBase
     {
         private readonly IWorkRepository _workRepository;
+        private readonly IUserReminderRepository _userReminderRepository;
+        private readonly ReminderService _reminderRepository;
         private readonly IMapper _mapper;
         private readonly ApiResponse response;
-        public WorkController(IWorkRepository workRepository, IMapper mapper)
+        public WorkController(IWorkRepository workRepository, IMapper mapper, IUserReminderRepository userReminderRepository,
+            ReminderService reminderRepository)
         {
             _workRepository = workRepository;
             _mapper = mapper;
+            _userReminderRepository = userReminderRepository;
             response = new();
+            _reminderRepository = reminderRepository;
         }
 
         [HttpGet("get-all-works")]
@@ -133,10 +139,14 @@ namespace BackTareas.Controllers
 
                 workNew.Status = WorkState.Pendiente;
 
+                var chatId =await _userReminderRepository.getUserChat(workNew.UserId);
+                
+
                 var createWork = await _workRepository.Create(workNew);
 
                 if (createWork != null)
                 {
+                    await _reminderRepository.ScheduleReminder(chatId.ChatId, $"Hola {chatId.Name}, recuerda esto:{createWork.Title}", createWork.DateTime);
                     response.StatusCode = HttpStatusCode.Created;
                     response.Result = createWork;
 
@@ -196,7 +206,7 @@ namespace BackTareas.Controllers
                 await _workRepository.Delete(id);
                 response.StatusCode = HttpStatusCode.NoContent;
 
-                return NoContent();
+                return Ok(response);
                 
             }
             catch (Exception ex)

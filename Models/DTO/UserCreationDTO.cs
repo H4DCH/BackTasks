@@ -13,5 +13,8 @@ namespace BackTareas.Models.DTO
 
         [Required]
         public string Password { get; set; }
+
+        [Required]
+        public string ChatId { get; set; }
     }
 }

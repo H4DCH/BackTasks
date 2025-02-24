@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace BackTareas.Models
 {
@@ -21,6 +22,7 @@ namespace BackTareas.Models
 
         public int UserId { get; set; }
         [ForeignKey("UserId")]
+        [JsonIgnore]
         public User User { get; set; }  
     }
 }

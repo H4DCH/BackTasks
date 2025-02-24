@@ -2,12 +2,17 @@
 using BackTareas.Data;
 using BackTareas.Repository;
 using BackTareas.Repository.IRepository;
+using BackTareas.Service;
 using BackTareas.Utilities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Text.Json.Serialization;
+using Telegram.Bot;
+using Quartz;
+using Quartz.Impl;
+using BackTareas.Jobs;
 
 namespace BackTareas
 {
@@ -34,6 +39,7 @@ namespace BackTareas
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             });
 
+  
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("NuevaPolitica", app =>
@@ -45,8 +51,40 @@ namespace BackTareas
             builder.Services.AddAutoMapper(typeof(Program));
             builder.Services.AddScoped<IWorkRepository,WorkRepository>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IUserReminderRepository,UserReminderRepository>();
 
             builder.Services.AddSingleton<CreatedToken>();
+
+            builder.Services.AddSingleton<ITelegramBotClient>(providee =>
+              new TelegramBotClient("7252831197:AAHefSGGiynsZqrNgV9oTkC_Hyk1A4zJVVQ"));
+
+            builder.Services.AddSingleton<IReminderRepository, ReminderRepository>();
+            builder.Services.AddSingleton<ReminderService>();
+            builder.Services.AddTransient<ReminderJob>();
+
+            builder.Services.AddLogging(loggin =>
+            {
+                loggin.AddConsole();
+            });
+
+            builder.Logging.ClearProviders();
+            builder.Logging.AddConsole();
+
+            // Registrar Quartz
+            builder.Services.AddQuartz(config =>
+            {
+                config.UseMicrosoftDependencyInjectionJobFactory(); // Habilitar la inyección de dependencias
+                config.UseSimpleTypeLoader();
+                config.UseInMemoryStore();
+                config.UseDefaultThreadPool();
+            }).AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
+
+            builder.Services.AddSingleton(provider =>
+            {
+                var schedulerFactory = new StdSchedulerFactory();
+                return schedulerFactory.GetScheduler().Result; // Obtiene la instancia del scheduler
+            });
+
 
             builder.Services.AddAuthentication(config =>
             {

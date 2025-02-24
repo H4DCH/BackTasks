@@ -8,6 +8,7 @@ using BackTareas.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
+using Telegram.Bot;
 
 namespace BackTareas.Controllers
 {
@@ -18,10 +19,12 @@ namespace BackTareas.Controllers
         private readonly  IUserRepository _userRepository;
         private readonly ApiResponse response;
         private readonly IMapper _mapper;
-        public UserController(IUserRepository userRepository, IMapper mapper)
+        private readonly ITelegramBotClient _telegramBotClient;
+        public UserController(IUserRepository userRepository, IMapper mapper, ITelegramBotClient telegramBotClient)
         {
             _userRepository = userRepository;
             _mapper = mapper;
+            _telegramBotClient = telegramBotClient;
             response = new();   
         }
 
@@ -96,6 +99,7 @@ namespace BackTareas.Controllers
                         "Id no encontrado o incorrecto"
                     };
                 }
+
                 var userDTO = _mapper.Map<UserWithWorksDTO>(user);
 
                 response.StatusCode = HttpStatusCode.OK;

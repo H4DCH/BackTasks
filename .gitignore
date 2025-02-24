@@ -20,7 +20,7 @@
 mono_crash.*
 
 # App settings
-appsettings.local.json
+appsettings.json
 appsettings.Development.json
 
 # Build results

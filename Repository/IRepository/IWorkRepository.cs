@@ -6,6 +6,6 @@ namespace BackTareas.Repository.IRepository
     {
         Task<Work> GetById(int id);
         Task Update(Work work);
-        Task<Work>Create(Work model);    
+        Task<Work>Create(Work model);
     }
 }
